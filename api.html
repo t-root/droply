@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><title>API tạo file</title></head>
+<body>
+<pre id="out">Đang xử lý…</pre>
+<script>
+/*
+ * API tạo file (GitHub Pages: https://t-root.github.io/droply/api.html)
+ * Mỗi lần gọi = 1 commit lên main của t-root/droply. Token đọc từ none.txt ở gốc repo.
+ *
+ *   api.html?name=<tên file>&content=<nội dung>&message=<commit message>
+ *
+ *   name     (bắt buộc)  Đường dẫn file, vd sun-ar/test.txt (thư mục tự tạo)
+ *   content  (bắt buộc)  Nội dung UTF-8, nhớ mã hóa URL
+ *   message  (tùy chọn)  Commit message (mặc định "Add/Update <name>")
+ *
+ * Ví dụ: api.html?name=sun-ar/test.txt&content=hello
+ * Kết quả (JSON hiển thị trên trang): { "name", "created", "commit": "<sha>", "url": "<link file>" }
+ * Lỗi: { "error": "..." }. File đã có thì bị ghi đè (created: false).
+ * Lưu ý: cần chạy JavaScript (trình duyệt/iframe); content chỉ hợp với nội dung ngắn.
+ *
+ * Deploy: push index.html, api.html hoặc .github/workflows/pages.yml lên main sẽ tự deploy Pages.
+ */
+const owner = 't-root', repo = 'droply';
+async function loadToken() {
+  const r = await fetch('none.txt', { cache: 'no-store' });
+  if (!r.ok) throw new Error('Không tải được none.txt (HTTP ' + r.status + ').');
+  return 'github_pat_' + (await r.text()).trim();
+}
+const q = new URLSearchParams(location.search), out = document.getElementById('out');
+
+async function createFile(name, content, message) {
+  const parts = name.replaceAll('\\', '/').split('/').filter(Boolean);
+  if (!parts.length || parts.some(p => p === '.' || p === '..' || p.toLowerCase() === '.git')) throw new Error('Tên file không hợp lệ.');
+  const path = parts.map(encodeURIComponent).join('/'), url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+  const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${await loadToken()}`, 'Content-Type': 'application/json' };
+
+  const old = await fetch(url, { headers, cache: 'no-store' }), oldData = await old.json();
+  if (!old.ok && old.status !== 404) throw new Error(oldData.message);
+  if (Array.isArray(oldData)) throw new Error('Tên này là một thư mục.');
+  const sha = old.ok ? oldData.sha : undefined;
+
+  const bytes = new TextEncoder().encode(content);
+  const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify({
+    message: message || `${sha ? 'Update' : 'Add'} ${parts.join('/')}`,
+    content: btoa(Array.from(bytes, b => String.fromCharCode(b)).join('')),
+    ...(sha && { sha }),
+  }) });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.message);
+  return { name: parts.join('/'), created: !sha, commit: d.commit.sha, url: d.content.html_url };
+}
+
+(async () => {
+  let res;
+  try {
+    if (!q.has('name') || !q.has('content')) throw new Error('Thiếu tham số name hoặc content.');
+    res = await createFile(q.get('name'), q.get('content'), q.get('message'));
+  } catch (e) { res = { error: e.message }; }
+  out.textContent = JSON.stringify(res, null, 2);
+  document.title = res.error ? 'error' : 'done';
+})();
+</script>
+</body>
+</html>
