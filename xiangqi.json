@@ -493,5 +493,10 @@
     "name": "Thế cờ 99",
     "board": "n8/3PPP3/3kb4/9/5R3/9/5CC2/3rcnc2/3p5/5K3",
     "mate": 5
+  },
+  {
+    "name": "Thế cờ 100",
+    "board": "8r/4RP2c/5k3/9/9/9/9/9/8C/4K4",
+    "mate": 2
   }
 ]
