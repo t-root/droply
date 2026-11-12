@@ -463,5 +463,10 @@
     "name": "Thế cờ 93",
     "board": "3aka2c/4n4/4c4/9/9/9/9/4C4/4R4/3AKA2C",
     "mate": 6
+  },
+  {
+    "name": "Thế cờ 94",
+    "board": "3akab2/3Pr4/4c4/9/9/9/9/4C4/4N4/3AKAC2",
+    "mate": 3
   }
 ]
