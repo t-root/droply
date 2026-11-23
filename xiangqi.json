@@ -583,5 +583,10 @@
     "name": "Thế cờ 117",
     "board": "4N4/3PPP3/2nkb4/9/4R4/5C3/6C2/3rpcc2/3p5/5K3",
     "mate": 2
+  },
+  {
+    "name": "Thế cờ 118",
+    "board": "8r/4RP2c/5k3/9/9/9/9/9/4K3C/9",
+    "mate": 2
   }
 ]
